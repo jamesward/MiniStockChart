@@ -1,0 +1,11 @@
+<sql>
+<statement>
+DROP TABLE ACCOUNT
+</statement>
+<statement>
+DROP TABLE CONTACT
+</statement>
+<statement>
+DROP TABLE OPPORTUNITY
+</statement>
+</sql>

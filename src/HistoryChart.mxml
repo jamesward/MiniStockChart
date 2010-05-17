@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:VBox xmlns:mx="http://www.adobe.com/2006/mxml" xmlns="*"
+	paddingTop="8" paddingRight="8" paddingLeft="8" paddingBottom="8"
+	creationComplete="initComp()">
+	
+	<mx:Script>
+		<![CDATA[
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.events.DividerEvent;
+			import mx.graphics.SolidColor;
+			import mx.graphics.Stroke;
+			import mx.rpc.AsyncToken;
+			import mx.rpc.events.FaultEvent;
+
+			[Bindable] public var chartData:ArrayCollection;
+			[Bindable] public var mainData:ArrayCollection;
+			
+			[Bindable] private var leftBoundary:Number;
+			[Bindable] private var rightBoundary:Number;
+			
+			private var staticLeftBoundary:Number;
+			private var staticRightBoundary:Number;
+			
+			public var smallDrag:Boolean = false;
+			public var bigDrag:Boolean = false;
+			public var mouseXRef:Number;
+			
+			public var ticker:String;
+      
+      
+			
+			public function initComp():void
+			{
+				if (ticker != null)
+				{
+					srv.url = "data/market/" + ticker.toUpperCase() + ".xml";
+					srv.send();
+				}
+      }
+      
+      public function beginZoom():void
+      {
+        stopDragChart();
+      }
+        
+      public function zoom(num:Number):void
+      {
+        var bc:Number = num * chartData.length;
+        
+        if (Math.abs(bc) > 2)
+        {
+          
+          leftBoundary -= (bc / 2);
+          rightBoundary += (bc / 2);
+          
+          // boundry check
+          if ((rightBoundary - leftBoundary) < 6)
+          {
+            leftBoundary += (bc / 2);
+            rightBoundary -= (bc / 2);
+          }
+          
+          if (leftBoundary < 0)
+          {
+            leftBoundary = 0;
+          }
+          
+          if (rightBoundary > chartData.length)
+          {
+            rightBoundary = chartData.length;
+          }
+          
+        
+          updateMainData();
+        }
+			}
+
+			public function set historyData(historyData:ArrayCollection):void
+			{
+                chartData = historyData;
+                mainData = new ArrayCollection(chartData.source);
+                
+                var maxClose:Number = 0;
+                var maxVolume:Number = 0;
+                var length:int = chartData.length;
+                for (var i:int;i<length;i++)
+                {
+                	maxClose = chartData.getItemAt(i).adjclose > maxClose ? chartData.getItemAt(i).adjclose : maxClose;
+                	maxVolume = chartData.getItemAt(i).volume > maxVolume ? chartData.getItemAt(i).volume : maxVolume;
+                }
+                
+                closeAxis.maximum = maxClose;
+                volumeAxis.maximum = maxVolume;
+
+                leftBoundary = chartData.length * .4;
+                rightBoundary = chartData.length * .8;
+                updateMainData();
+			}
+			
+			private function updateBoundariesFromDivider(event:DividerEvent):void
+			{
+				leftBoundary = Math.abs(leftBox.width / (overlayCanvas.width / chartData.length));
+				rightBoundary = Math.abs(chartData.length - (rightBox.width / (overlayCanvas.width / chartData.length)));
+				updateMainData();
+			}
+			
+			private function updateMainData():void
+			{
+				mainData.source = chartData.source.slice(leftBoundary, rightBoundary)
+			}
+
+			private function setMouseDown(theChart:CartesianChart):void
+			{        
+				mouseXRef = this.mouseX;
+				staticLeftBoundary = leftBoundary;
+				staticRightBoundary = rightBoundary;
+				if(theChart == bigChart) bigDrag = true;
+				if(theChart == smallChart) smallDrag = true;
+				this.systemManager.addEventListener(MouseEvent.MOUSE_MOVE, moveChart);
+				this.systemManager.addEventListener(MouseEvent.MOUSE_UP, stopDragChart);
+			}
+			
+			private function stopDragChart(event:MouseEvent=null):void
+			{
+				smallDrag = false;
+				bigDrag = false;
+				this.systemManager.removeEventListener(MouseEvent.MOUSE_MOVE, moveChart);
+				this.systemManager.removeEventListener(MouseEvent.MOUSE_UP, stopDragChart);
+			}
+			
+			private function moveChart(event:MouseEvent):void
+			{
+				var tempLeft:Number;				
+				var tempRight:Number;				
+				if(bigDrag)
+				{
+					tempLeft = staticLeftBoundary + (mouseXRef - this.mouseX) / (bigChart.width / mainData.length);
+					if (tempLeft<0) tempLeft = 0;
+					tempRight = staticRightBoundary + (mouseXRef - this.mouseX) / (bigChart.width / mainData.length);
+					if (tempRight>chartData.source.length - 1) tempRight = chartData.source.length - 1;
+				}
+				else if(smallDrag)
+				{
+					tempLeft = staticLeftBoundary - (mouseXRef - this.mouseX) / (smallChart.width / chartData.length);
+					if (tempLeft<0) tempLeft = 0;
+					tempRight = staticRightBoundary - (mouseXRef - this.mouseX) / (smallChart.width / chartData.length);
+					if (tempRight>chartData.source.length - 1) tempRight = chartData.source.length - 1;
+				}
+				leftBoundary = tempLeft;
+				rightBoundary = tempRight;
+				var s:String;
+				updateMainData();
+			}
+			
+			private function faultHandler(event:FaultEvent):void
+			{
+				Alert.show("Cannot load " + event.target.url, "Error");	
+			}
+			
+		]]>
+	</mx:Script>
+
+	<mx:HTTPService id="srv" showBusyCursor="true" fault="faultHandler(event)"/>
+
+	<mx:Binding source="srv.lastResult.doc.entry" destination="historyData"/>
+
+	<mx:CartesianChart id="bigChart" showDataTips="true" dataProvider="{mainData}" width="100%" height="100%">
+		
+		<mx:horizontalAxis>
+			<mx:CategoryAxis id="hAxis1" categoryField="date"/>
+		</mx:horizontalAxis>
+        <mx:horizontalAxisRenderers>
+        	<mx:AxisRenderer axis="{hAxis1}" showLine="false" showLabels="true" canDropLabels="true"/>
+    	</mx:horizontalAxisRenderers>
+        
+        <mx:verticalAxis>
+        	<mx:LinearAxis id="closeAxis" autoAdjust="true"/>
+    	</mx:verticalAxis>
+        <mx:verticalAxisRenderers>
+        	<mx:AxisRenderer axis="{closeAxis}" showLine="false" showLabels="true"/>
+        </mx:verticalAxisRenderers>
+        
+		<mx:series>
+			<mx:AreaSeries name="close" yField="adjclose" areaFill="{new SolidColor(0x0033CC, 0.5)}" areaStroke="{new Stroke(0x0033CC, 1)}"/>
+	    </mx:series>
+	    
+	    <mx:annotationElements>
+	    	<mx:Canvas width="100%" height="100%" mouseDown="setMouseDown(bigChart)" backgroundAlpha="0.001" backgroundColor="#ffffff"/><!-- buttonMode="true" />-->
+	    </mx:annotationElements>
+	    
+	</mx:CartesianChart>
+	
+	<mx:CartesianChart id="volumeChart" showDataTips="true" dataProvider="{mainData}" width="100%" height="65">
+		
+		<mx:horizontalAxis>
+			<mx:CategoryAxis id="hAxis2" categoryField="date"/>
+		</mx:horizontalAxis>
+        <mx:horizontalAxisRenderers>
+        	<mx:AxisRenderer axis="{hAxis2}" showLine="false" showLabels="false"/>
+    	</mx:horizontalAxisRenderers>
+        
+        <mx:verticalAxis>
+        	<mx:LinearAxis id="volumeAxis" autoAdjust="true"/>
+    	</mx:verticalAxis>
+        <mx:verticalAxisRenderers>
+        	<mx:AxisRenderer axis="{volumeAxis}" showLine="false" showLabels="false"/>
+        </mx:verticalAxisRenderers>
+        
+		<mx:series>
+			<mx:ColumnSeries name="close" yField="volume"/>
+	    </mx:series>
+	    
+	    <mx:annotationElements>
+	    	<mx:Canvas width="100%" height="100%" buttonMode="true" mouseDown="setMouseDown(bigChart)" useHandCursor="true" backgroundAlpha="0.001" backgroundColor="#ffffff"/>
+	    </mx:annotationElements>
+	    
+	</mx:CartesianChart>
+	
+	<mx:CartesianChart id="smallChart" dataProvider="{chartData}" width="100%" height="65">
+		
+		<mx:horizontalAxis>
+			<mx:CategoryAxis id="hAxis3" categoryField="date"/>
+		</mx:horizontalAxis>
+        <mx:horizontalAxisRenderers>
+        	<mx:AxisRenderer axis="{hAxis3}" showLine="false" showLabels="false"/>
+    	</mx:horizontalAxisRenderers>
+        
+        <mx:verticalAxis>
+        	<mx:LinearAxis id="smallChartAxis"/>
+    	</mx:verticalAxis>
+        <mx:verticalAxisRenderers>
+        	<mx:AxisRenderer axis="{smallChartAxis}" showLine="false" showLabels="false"/>
+    	</mx:verticalAxisRenderers>
+		
+		<mx:series>
+			<mx:AreaSeries name="close" yField="adjclose" areaStroke="{new Stroke(0x0033CC, 1)}" areaFill="{new SolidColor(0x0033CC, 0.5)}" />
+	    </mx:series>
+	    
+	    <mx:annotationElements>
+	    	<mx:HDividedBox id="overlayCanvas" width="100%" alpha="1" dividerAffordance="5" liveDragging="true" 
+				horizontalGap="10" horizontalScrollPolicy="off" 
+				dividerDrag="updateBoundariesFromDivider(event)" >
+	    		<mx:Canvas id="leftBox" height="100%"
+	    			width="{(overlayCanvas.width / chartData.length) * leftBoundary}" 
+	    			backgroundAlpha="0.8" backgroundColor="#EEEEEE" borderColor="#DDDDDD" borderStyle="solid" />
+	    		<mx:Canvas id="visibleBox" width="100%" height="100%" buttonMode="true" mouseDown="setMouseDown(smallChart)" useHandCursor="true" backgroundAlpha="0.1" backgroundColor="#ffffff" />
+	    		<mx:Canvas id="rightBox" height="100%" 
+	    			width="{(overlayCanvas.width / chartData.length) * (chartData.length - rightBoundary)}" 
+	    			backgroundAlpha="0.8" backgroundColor="#EEEEEE" borderColor="#DDDDDD" borderStyle="solid"/>
+	    	</mx:HDividedBox>
+	    </mx:annotationElements>
+	    
+	</mx:CartesianChart>
+
+</mx:VBox>

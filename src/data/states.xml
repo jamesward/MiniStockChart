@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<states>
+    <state label="Alabama" data="AL"/>
+    <state label="Alaska" data="AK"/>
+    <state label="Arizona" data="AZ"/>
+    <state label="Arkansas" data="AR"/>
+    <state label="California" data="CA"/>
+    <state label="Colorado" data="CO"/>
+    <state label="Connecticut" data="CT"/>
+    <state label="Delaware" data="DE"/>
+    <state label="Florida" data="FL"/>
+    <state label="Georgia" data="GA"/>
+    <state label="Hawaii" data="HI"/>
+    <state label="Idaho" data="ID"/>
+    <state label="Illinois" data="IL"/>
+    <state label="Indiana" data="IN"/>
+    <state label="Iowa" data="IA"/>
+    <state label="Kansas" data="KS"/>
+    <state label="Kentucky" data="KY"/>
+    <state label="Louisiana" data="LA"/>
+    <state label="Maine" data="ME"/>
+    <state label="Maryland" data="MD"/>
+    <state label="Massachusetts" data="MA"/>
+    <state label="Michigan" data="MI"/>
+    <state label="Minnesota" data="MN"/>
+    <state label="Mississippi" data="MS"/>
+    <state label="Missouri" data="MO"/>
+    <state label="Montana" data="MT"/>
+    <state label="Nebraska" data="NE"/>
+    <state label="Nevada" data="NV"/>
+    <state label="New Hampshire" data="NH"/>
+    <state label="New Jersey" data="NJ"/>
+    <state label="New Mexico" data="NM"/>
+    <state label="New York" data="NY"/>
+    <state label="North Carolina" data="NC"/>
+    <state label="North Dakota" data="ND"/>
+    <state label="Ohio" data="OH"/>
+    <state label="Oklahoma" data="OK"/>
+    <state label="Oregon" data="OR"/>
+    <state label="Pennsylvania" data="PA"/>
+    <state label="Rhode Island" data="RI"/>
+    <state label="South Carolina" data="SC"/>
+    <state label="South Dakota" data="SD"/>
+    <state label="Tennessee" data="TN"/>
+    <state label="Texas" data="TX"/>
+    <state label="Utah" data="UT"/>
+    <state label="Vermont" data="VT"/>
+    <state label="Virginia" data="VA"/>
+    <state label="Washington" data="WA"/>
+    <state label="West Virginia" data="WV"/>
+    <state label="Wisconsin" data="WI"/>
+    <state label="Wyoming" data="WY"/>
+</states>
